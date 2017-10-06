@@ -15,10 +15,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
+    <ClCompile Include="MyDecodeListener.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MyDecodeListener.cpp">
+    <ClCompile Include="OpenCVVideoPlayer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
