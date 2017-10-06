@@ -37,6 +37,7 @@ void MyDecodeListener::onDecodeStart() {
 void MyDecodeListener::onVideoFrameAvailable(AVFrame *vFrame) {
 	// printf("onVideoFrameAvailable\n");
 	mRenderer->enqueueVideoFrame(vFrame);
+	Sleep(10);
 }
 
 void MyDecodeListener::onAudioFrameAvailable(AVFrame *aFrame) {

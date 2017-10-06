@@ -126,6 +126,7 @@ int FFmpegDecoder::openInputStream(AVFormatContext *formatCtx, SInputStream *&is
 	return 0;
 }
 
+int cnt_frame = 0;
 int	FFmpegDecoder::decodingFunc() {
 	mDecodeListener->onDecodeStart();
 
@@ -178,6 +179,10 @@ int	FFmpegDecoder::decodingFunc() {
 			}
 		}
 		av_packet_unref(&av_packet);
+	}
+
+	while (mIsDecoding) {
+		Sleep(100);
 	}
 	mDecodeListener->onDecodeStop();
 	return 0;

@@ -29,7 +29,7 @@ private:
 	int					mVideoDelayMs;
 	SQueue<AVFrame*>*	mVideoFrmQueue;
 
-	SDL_Event			event;
+	SDL_Event			mEvent;
 	SDL_Window*			mScreen;
 	SDL_Renderer*		mSDLRenderer;
 	SDL_Texture*		mSDLTexture;

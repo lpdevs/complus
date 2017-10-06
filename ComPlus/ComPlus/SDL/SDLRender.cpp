@@ -65,7 +65,7 @@ int	SDLRender::videoStopTimer() {
 
 int SDLRender::videoRefreshTimer() {
 	while (mIsPlaying && mVideoFrmQueue->size() == 0) {
-		Sleep(10);
+		Sleep(20);
 	}
 
 	AVFrame* frm = mVideoFrmQueue->pop();
@@ -89,7 +89,6 @@ int	SDLRender::renderVideoFromData(AVFrame *yuvFrame) {
 }
 
 int	SDLRender::playFunc() {
-	int *p;
 	int mouseX, mouseY;
 
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER)) {
@@ -118,15 +117,15 @@ int	SDLRender::playFunc() {
 	// handle events
 	while (mIsPlaying)
 	{
-		SDL_WaitEvent(&event);
+		SDL_WaitEvent(&mEvent);
 
-		switch (event.type)
+		switch (mEvent.type)
 		{
 		case SDL_QUIT:
 			mIsPlaying = false;
 			break;
 		case SDL_KEYDOWN:
-			switch (event.key.keysym.sym)
+			switch (mEvent.key.keysym.sym)
 			{
 			case SDLK_LEFT:  break;
 			case SDLK_RIGHT: break;
@@ -135,7 +134,7 @@ int	SDLRender::playFunc() {
 			}
 			break;
 		case SDL_MOUSEBUTTONDOWN:
-			switch (event.button.button)
+			switch (mEvent.button.button)
 			{
 			case SDL_BUTTON_LEFT:
 				printf("Left button was pressed!\n");
@@ -149,8 +148,8 @@ int	SDLRender::playFunc() {
 			}
 			break;
 		case SDL_MOUSEMOTION:
-			mouseX = event.motion.x;
-			mouseY = event.motion.y;
+			mouseX = mEvent.motion.x;
+			mouseY = mEvent.motion.y;
 			break;
 		case FF_REFRESH_EVENT:
 			videoRefreshTimer();
