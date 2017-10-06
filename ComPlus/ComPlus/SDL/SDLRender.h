@@ -1,25 +1,39 @@
 #ifndef __SDL_RENDER_H__
 #define __SDL_RENDER_H__
 
-#include "../FFmpeg/FFmpegCommon.h"
+#include "..\FFmpeg\FFmpegCommon.h"
+#include "..\Common\SQueue.h"
+#include <thread>
 #include <SDL.h>
 #pragma comment(lib, "SDL2.lib")
 
 class SDLRender {
 public:
-	SDLRender(char *windowName);
+	SDLRender(char *windowName, int screenW, int screenH);
 	~SDLRender();
-	int				init(int screenW, int screenH);
-	int				release();
-	int				renderVideoFromData(unsigned char **yuv420pData, int width, int height);
+	int					start();
+	int					stop();
+	int					enqueueVideoFrame(AVFrame *frm);
+protected:
+	int					renderVideoFromData(AVFrame *yuvFrame);
+	friend int			playThreadFunc(SDLRender *thiz);
+	int					playFunc();
+	int					videoRefreshTimer();
+	int					videoStopTimer();
 private:
-	int				mScreenWidth;
-	int				mScreenHeight;
-	SDL_Window*		mScreen;
-	SDL_Renderer*	mSDLRenderer;
-	SDL_Texture*	mSDLTexture;
-	SDL_Rect		mSDLRect;
-	char*			mWindowName;
+	int					mScreenWidth;
+	int					mScreenHeight;
+	char*				mWindowName;
+	bool				mIsPlaying;
+	std::thread*		mPlayThread;
+	int					mVideoDelayMs;
+	SQueue<AVFrame*>*	mVideoFrmQueue;
+
+	SDL_Event			event;
+	SDL_Window*			mScreen;
+	SDL_Renderer*		mSDLRenderer;
+	SDL_Texture*		mSDLTexture;
+	SDL_Rect			mSDLRect;
 };
 
 #endif

@@ -85,7 +85,11 @@ int FFmpegDecoder::start() {
 	mIsDecoding = true;
 	mThreadDecoding = new std::thread(decodingFuncThread, this);
 	mThreadDecoding->detach();
-	mDecodeListener->onDecodeStart();
+	return 0;
+}
+
+int	decodingFuncThread(FFmpegDecoder *thiz) {
+	thiz->decodingFunc();
 	return 0;
 }
 
@@ -123,30 +127,27 @@ int FFmpegDecoder::openInputStream(AVFormatContext *formatCtx, SInputStream *&is
 }
 
 int	FFmpegDecoder::decodingFunc() {
-	while (mIsDecoding) {
-		AVPacket av_packet;
-		av_packet.data = 0;
-		av_packet.size = 0;
+	mDecodeListener->onDecodeStart();
 
+	AVPacket av_packet;
+	av_init_packet(&av_packet);
+
+	while (mIsDecoding) {
 		int ret, len;
 		ret = av_read_frame(mFormatCtx, &av_packet);
-		if (ret < 0) {
-			if (mFormatCtx->pb->error == 0) {
-				av_packet_unref(&av_packet);
-				Sleep(10); /* no error; wait for user input */
-				continue;
-			}
-			else {
-				av_packet_unref(&av_packet);
-				LOG("Read av frame failed");
-				break;
-			}
+		if (ret == AVERROR_EOF) {
+			LOG("Reading frame finished");
+			break;
+		}
+		else if (ret < 0) {
+			LOG("Reading frame failed");
+			break;
 		}
 
-		AVFrame *frame = av_frame_alloc();
 		int got_picture = 0;
 		if (av_packet.stream_index == mVideoStream->index) {
 			//LOG("Enqueue video packet");
+			AVFrame *frame = av_frame_alloc();
 			len = avcodec_decode_video2(mVideoStream->codec_ctx, frame, &got_picture, &av_packet);
 			if (len < 0) {
 				av_frame_free(&frame);
@@ -162,6 +163,7 @@ int	FFmpegDecoder::decodingFunc() {
 		}
 		else if (av_packet.stream_index == mAudioStream->index) {
 			//LOG("Enqueue audio packet");
+			AVFrame *frame = av_frame_alloc();
 			len = avcodec_decode_audio4(mAudioStream->codec_ctx, frame, &got_picture, &av_packet);
 			if (len < 0) {
 				av_frame_free(&frame);
@@ -177,10 +179,6 @@ int	FFmpegDecoder::decodingFunc() {
 		}
 		av_packet_unref(&av_packet);
 	}
-	return 0;
-}
-
-int	decodingFuncThread(FFmpegDecoder *thiz) {
-	thiz->decodingFunc();
+	mDecodeListener->onDecodeStop();
 	return 0;
 }

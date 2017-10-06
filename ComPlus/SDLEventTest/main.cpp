@@ -1,28 +1,74 @@
 #include <sstream>
+#include <thread>
+
 #include <SDL.h>
 #pragma comment(lib, "SDL2.lib")
 #undef main
 
-#define INPUT_PATH "..\\resources\\spaceship.bmp"
+#define INPUT_PATH  "..\\resources\\spaceship.bmp"
 #define WINDOW_NAME "SDL2 Keyboard/Mouse events"
+
+#define FF_REFRESH_EVENT	(SDL_USEREVENT)
+#define FF_QUIT_EVENT		(SDL_USEREVENT + 1)
+
+// variables
+bool quit;
+int x;
+int y;
+int mouseX;
+int mouseY;
+int cnt;
+char windowName[1024];
+std::thread *refreshThread;
+bool isRefresh;
+
+SDL_Event event;
+SDL_Window *window;
+SDL_Renderer *renderer;
+SDL_Surface *image;
+SDL_Texture *texture;
+
+/* schedule a video refresh in 'delay' ms */
+Uint32 scheduleRefresh(int delay_ms, void *data) {
+	SDL_Event event;
+	event.type = FF_REFRESH_EVENT;
+	event.user.data1 = data;
+	SDL_PushEvent(&event);
+	SDL_Delay(delay_ms);
+	return 0; /* 0 means stop timer */
+}
+
+/* schedule a quit event */
+Uint32 scheduleQuit(int delay_ms, void *data) {
+	SDL_Event event;
+	event.type = FF_QUIT_EVENT;
+	event.user.data1 = data;
+	SDL_PushEvent(&event);
+	SDL_Delay(delay_ms);
+	return 0; /* 0 means stop timer */
+}
+
+void refreshThreadFunc(void *data) {
+	int *p = (int *)data;
+	while (isRefresh && *p < 10) {
+		scheduleRefresh(1000, (void *)p);
+		*p += 1;
+	}
+	scheduleQuit(1000, (void *)p);
+}
 
 int main(int argc, char ** argv)
 {
-	// variables
-	bool quit = false;
-	int x = 288;
-	int y = 208;
-	char windowName[1024];
+	int *p;
+	quit = false;
+	x = 288;
+	y = 208;
+	cnt = 0;
+	isRefresh = true;
 	strcpy(windowName, WINDOW_NAME);
 
-	SDL_Event event;
-	SDL_Window *window;
-	SDL_Renderer *renderer;
-	SDL_Surface *image;
-	SDL_Texture *texture;
-
 	// init SDL
-	SDL_Init(SDL_INIT_VIDEO);
+	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER);
 	window = SDL_CreateWindow(windowName,SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 640, 480, 0);
 	renderer = SDL_CreateRenderer(window, -1, 0);
 
@@ -31,11 +77,13 @@ int main(int argc, char ** argv)
 	SDL_FreeSurface(image);
 	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 
+	refreshThread = new std::thread(refreshThreadFunc, &cnt);
+	refreshThread->detach();
+
 	// handle events
 	while (!quit)
 	{
-		SDL_Delay(20);
-		SDL_PollEvent(&event);
+		SDL_WaitEvent(&event);
 
 		switch (event.type)
 		{
@@ -66,12 +114,20 @@ int main(int argc, char ** argv)
 			}
 			break;
 		case SDL_MOUSEMOTION:
-			int mouseX = event.motion.x;
-			int mouseY = event.motion.y;
+			mouseX = event.motion.x;
+			mouseY = event.motion.y;
 
-			std::stringstream ss;
-			ss << "X: " << mouseX << " Y: " << mouseY;
-			SDL_SetWindowTitle(window, ss.str().c_str());
+			sprintf(windowName, "X : %d - Y : %d", mouseX, mouseY);
+			SDL_SetWindowTitle(window, windowName);
+			break;
+		case FF_REFRESH_EVENT:
+			p = (int*)event.user.data1;
+			printf("Refresh: %d\n", *p);
+			break;
+		case FF_QUIT_EVENT:
+			p = (int*)event.user.data1;
+			printf("Quit: %d\n", *p);
+			quit = true;
 			break;
 		}
 
@@ -87,6 +143,5 @@ int main(int argc, char ** argv)
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
 	SDL_Quit();
-
 	return 0;
 }

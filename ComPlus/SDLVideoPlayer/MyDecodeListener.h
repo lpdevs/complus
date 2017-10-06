@@ -16,9 +16,9 @@ public:
 	void onAudioFrameAvailable(AVFrame *aFrame);
 	void onDecodeStop();
 private:
-	SDLRender *mRenderer;
-	AVRational mVideoTimebase;
-	AVRational mAudioTimebase;
+	SDLRender*	mRenderer;
+	AVRational	mVideoTimebase;
+	AVRational	mAudioTimebase;
 };
 
 #endif
